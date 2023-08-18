@@ -13,7 +13,7 @@ import java.util.Random;
 public class GameService {
 
     private final Random random = new Random();
-    private final int serverNumber = random.nextInt(100) + 1;
+    int serverNumber = random.nextInt(100) + 1;
 
     /**
      * Makes a bet based on the provided request.
@@ -21,8 +21,24 @@ public class GameService {
      * @return The bet response.
      */
     public BetResponse play(BetRequest betRequest) {
-        double winValue = calculateWin(betRequest.getBetAmount(), betRequest.getNumber());
+        validateBetRequest(betRequest);
+        double winValue = calculateWin(betRequest.getBetAmount(), betRequest.getNumber(), serverNumber);
         return new BetResponse(winValue);
+    }
+
+    /**
+     * Validates the bet request to ensure data integrity.
+     * @param betRequest The bet request.
+     */
+    private void validateBetRequest(BetRequest betRequest) {
+        if (betRequest.getBetAmount() <= 0) {
+            throw new IllegalArgumentException("Bet amount should be greater than zero.");
+        }
+
+        int number = betRequest.getNumber();
+        if (number < 1 || number > 100) {
+            throw new IllegalArgumentException("Chosen number should be between 1 and 100, inclusive.");
+        }
     }
 
     /**
@@ -31,7 +47,7 @@ public class GameService {
      * @param number The chosen number.
      * @return The calculated win amount.
      */
-    private double calculateWin(double bet, int number) {
+    private double calculateWin(double bet, int number, int serverNumber) {
         if (number > serverNumber) {
             return bet * (99.0 / (100.0 - number));
         }
