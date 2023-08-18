@@ -1,5 +1,6 @@
 package com.bombaylive.chancecrest.game.service;
-
+import com.bombaylive.chancecrest.exception.InvalidBetAmountException;
+import com.bombaylive.chancecrest.exception.InvalidNumberChoiceException;
 import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
 import org.springframework.stereotype.Service;
@@ -32,12 +33,12 @@ public class GameService {
      */
     private void validateBetRequest(BetRequest betRequest) {
         if (betRequest.getBetAmount() <= 0) {
-            throw new IllegalArgumentException("Bet amount should be greater than zero.");
+            throw new InvalidBetAmountException("Bet amount should be greater than zero.");
         }
 
         int number = betRequest.getNumber();
         if (number < 1 || number > 100) {
-            throw new IllegalArgumentException("Chosen number should be between 1 and 100, inclusive.");
+            throw new InvalidNumberChoiceException("Chosen number should be between 1 and 100, inclusive.");
         }
     }
 
