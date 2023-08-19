@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
  * Handles global exceptions for the application, returning standardized error responses.
  */
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends Throwable {
 
     /**
      * Handle exceptions related to invalid bet amounts.
