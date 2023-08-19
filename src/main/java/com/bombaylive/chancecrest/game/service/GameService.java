@@ -4,7 +4,6 @@ import com.bombaylive.chancecrest.exception.InvalidNumberChoiceException;
 import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
 import org.springframework.stereotype.Service;
-
 import java.util.Random;
 
 /**
@@ -31,7 +30,8 @@ public class GameService {
      * Validates the bet request to ensure data integrity.
      * @param betRequest The bet request.
      */
-    private void validateBetRequest(BetRequest betRequest) {
+    public void validateBetRequest(BetRequest betRequest) {
+
         if (betRequest.getBetAmount() <= 0) {
             throw new InvalidBetAmountException("Bet amount should be greater than zero.");
         }
