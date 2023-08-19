@@ -1,31 +1,29 @@
 package com.bombaylive.chancecrest.game.controller;
-
+import com.bombaylive.chancecrest.exception.InvalidBetAmountException;
+import com.bombaylive.chancecrest.exception.InvalidNumberChoiceException;
 import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
 import com.bombaylive.chancecrest.game.service.GameService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.Valid;
 
 /**
  * Controller for game functions.
  */
 @RestController
-@RequestMapping("/game")
 public class GameController {
 
+    private final SimpMessagingTemplate template;
     private final GameService gameService;
 
-    /**
-     * Constructor-based dependency injection.
-     *
-     * @param gameService The game service bean.
-     */
-    public GameController(GameService gameService) {
+    @Autowired
+    public GameController(GameService gameService, SimpMessagingTemplate template) {
         this.gameService = gameService;
+        this.template = template;
     }
 
     /**
@@ -34,8 +32,19 @@ public class GameController {
      * @param betRequest The bet request payload.
      * @return The bet response.
      */
-    @PostMapping("/play")
-    public BetResponse makeBet(@RequestBody @Valid BetRequest betRequest) {
-        return gameService.play(betRequest);
+    @MessageMapping("/play")
+    @SendTo("/topic/play")
+    public ResponseEntity<BetResponse> makeBet(BetRequest betRequest) {
+        try {
+            gameService.validateBetRequest(betRequest);
+            return ResponseEntity.ok(gameService.play(betRequest));
+        } catch (InvalidBetAmountException | InvalidNumberChoiceException ex) {
+            sendErrorMessage(ex.getMessage());
+            return ResponseEntity.ok(new BetResponse(0));
+        }
+    }
+
+    private void sendErrorMessage(String message) {
+        template.convertAndSend("/topic/errors", message);
     }
 }
