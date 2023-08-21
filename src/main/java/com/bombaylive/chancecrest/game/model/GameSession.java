@@ -1,7 +1,6 @@
 package com.bombaylive.chancecrest.game.model;
-
-import lombok.*;
 import javax.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 /**
