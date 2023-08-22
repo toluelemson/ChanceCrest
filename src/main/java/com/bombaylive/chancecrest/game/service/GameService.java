@@ -1,57 +1,135 @@
 package com.bombaylive.chancecrest.game.service;
+
 import com.bombaylive.chancecrest.exception.InvalidBetAmountException;
 import com.bombaylive.chancecrest.exception.InvalidNumberChoiceException;
 import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
+import com.bombaylive.chancecrest.util.ServerNumberGenerator;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
-import java.util.Random;
+
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Service class for game operations.
  */
 @Service
+@Slf4j
 public class GameService {
 
-    private final Random random = new Random();
-    int serverNumber = random.nextInt(100) + 1;
-
-    /**
-     * Makes a bet based on the provided request.
-     * @param betRequest The bet request.
-     * @return The bet response.
-     */
     public BetResponse play(BetRequest betRequest) {
+        ensureValidServerNumber(betRequest);
         validateBetRequest(betRequest);
-        double winValue = calculateWin(betRequest.getBetAmount(), betRequest.getNumber(), serverNumber);
-        return new BetResponse(winValue);
+
+        double winAmount = calculateWin(betRequest);
+
+        return BetResponse.builder()
+                .winAmount(winAmount)
+                .build();
     }
 
-    /**
-     * Validates the bet request to ensure data integrity.
-     * @param betRequest The bet request.
-     */
-    public void validateBetRequest(BetRequest betRequest) {
+    private void ensureValidServerNumber(BetRequest betRequest) {
+        int serverNumber = betRequest.getServerRandomNumber() > 0 ?
+                betRequest.getServerRandomNumber() :
+                ServerNumberGenerator.generate();
+        betRequest.setServerRandomNumber(serverNumber);
+    }
 
+    private void validateBetRequest(BetRequest betRequest) {
         if (betRequest.getBetAmount() <= 0) {
             throw new InvalidBetAmountException("Bet amount should be greater than zero.");
         }
 
-        int number = betRequest.getNumber();
+        int number = betRequest.getPlayerNumber();
         if (number < 1 || number > 100) {
-            throw new InvalidNumberChoiceException("Chosen number should be between 1 and 100, inclusive.");
+            throw new InvalidNumberChoiceException("Chosen number should be between 1 and 100");
         }
     }
 
-    /**
-     * Calculates the win amount based on the bet and number.
-     * @param bet The placed bet.
-     * @param number The chosen number.
-     * @return The calculated win amount.
-     */
-    private double calculateWin(double bet, int number, int serverNumber) {
-        if (number > serverNumber) {
-            return bet * (99.0 / (100.0 - number));
+    private double calculateWin(BetRequest betRequest) {
+        if (betRequest.getServerRandomNumber() < betRequest.getPlayerNumber()) {
+            double winMultiplier = 99.0 / (100 - betRequest.getPlayerNumber());
+            return betRequest.getBetAmount() * winMultiplier;
         }
-        return 0.0;
+        return 0;
+    }
+
+    public double calculateRTPWithStream(BetRequest betRequest) {
+        DoubleAdder totalSpent = new DoubleAdder();
+        DoubleAdder totalWon = new DoubleAdder();
+
+        IntStream.range(0, betRequest.getNumberOfRounds())
+                .parallel()
+                .forEach(i -> playGameRound(totalSpent, totalWon, betRequest));
+
+        return computeRTP(totalWon, totalSpent);
+    }
+
+    public double calculateRTPWithThreads(BetRequest betRequest) {
+        DoubleAdder totalSpent = new DoubleAdder();
+        DoubleAdder totalWon = new DoubleAdder();
+
+        List<Callable<Void>> tasks = IntStream.range(0, betRequest.getNumberOfRounds())
+                .mapToObj(i -> createGameRoundTask(totalSpent, totalWon, betRequest))
+                .collect(Collectors.toList());
+
+        executeTasksWithThreadPool(tasks, betRequest.getNumberOfThreads());
+
+        return computeRTP(totalWon, totalSpent);
+    }
+
+    private Callable<Void> createGameRoundTask(DoubleAdder totalSpent, DoubleAdder totalWon, BetRequest betRequest) {
+        return () -> {
+            playGameRound(totalSpent, totalWon, betRequest);
+            return null;
+        };
+    }
+
+    private void executeTasksWithThreadPool(List<Callable<Void>> tasks, int numberOfThreads) {
+        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+        try {
+            executor.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            log.error("Thread interrupted during execution", e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } finally {
+            shutdownExecutor(executor);
+        }
+    }
+
+    private void shutdownExecutor(ExecutorService executor) {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            log.error("Executor termination interrupted", e);
+            Thread.currentThread().interrupt();
+            executor.shutdownNow();
+        }
+    }
+
+    private double computeRTP(DoubleAdder totalWon, DoubleAdder totalSpent) {
+        return (totalWon.sum() / totalSpent.sum()) * 100;
+    }
+
+    private void playGameRound(DoubleAdder totalSpent, DoubleAdder totalWon, BetRequest betRequest) {
+        BetRequest br = BetRequest.builder()
+                .betAmount(betRequest.getBetAmount())
+                .playerNumber(betRequest.getPlayerNumber())
+                .build();
+
+        totalSpent.add(br.getBetAmount());
+
+        BetResponse response = play(br);
+        totalWon.add(response.getWinAmount());
     }
 }

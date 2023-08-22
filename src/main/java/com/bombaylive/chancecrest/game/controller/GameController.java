@@ -36,15 +36,20 @@ public class GameController {
     @SendTo("/topic/play")
     public ResponseEntity<BetResponse> makeBet(BetRequest betRequest) {
         try {
-            gameService.validateBetRequest(betRequest);
             return ResponseEntity.ok(gameService.play(betRequest));
         } catch (InvalidBetAmountException | InvalidNumberChoiceException ex) {
-            sendErrorMessage(ex.getMessage());
-            return ResponseEntity.ok(new BetResponse(0));
+            return sendErrorMessage(ex.getMessage());
         }
     }
 
-    private void sendErrorMessage(String message) {
+    @MessageMapping("/multiPlay")
+    @SendTo("/topic/multiPlay")
+    public ResponseEntity<BetResponse> simulateRTP(BetRequest betRequest) {
+        return ResponseEntity.ok(new BetResponse(gameService.calculateRTPWithStream(betRequest)));
+    }
+
+    private ResponseEntity<BetResponse> sendErrorMessage(String message) {
         template.convertAndSend("/topic/errors", message);
+        return null;
     }
 }
