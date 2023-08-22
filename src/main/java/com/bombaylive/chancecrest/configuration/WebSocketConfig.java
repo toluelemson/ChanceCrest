@@ -1,10 +1,15 @@
 package com.bombaylive.chancecrest.configuration;
+import org.apache.tomcat.websocket.server.WsSci;
+import org.springframework.boot.web.embedded.tomcat.TomcatContextCustomizer;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -22,8 +27,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.setApplicationDestinationPrefixes("/app");
     }
 
-    @Override
-    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.setMessageSizeLimit(5 * 1024 * 1024);
+    @Bean
+    public TomcatServletWebServerFactory tomcatContainerFactory() {
+        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
+        factory.setTomcatContextCustomizers(Collections.singletonList(tomcatContextCustomizer()));
+        return factory;
+    }
+
+    @Bean
+    public TomcatContextCustomizer tomcatContextCustomizer() {
+        return context -> context.addServletContainerInitializer(new WsSci(), null);
     }
 }
