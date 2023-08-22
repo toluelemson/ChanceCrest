@@ -5,6 +5,7 @@ import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
 import com.bombaylive.chancecrest.game.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -50,6 +51,6 @@ public class GameController {
 
     private ResponseEntity<BetResponse> sendErrorMessage(String message) {
         template.convertAndSend("/topic/errors", message);
-        return null;
+        return new ResponseEntity<>(new BetResponse(), HttpStatus.BAD_REQUEST);
     }
 }

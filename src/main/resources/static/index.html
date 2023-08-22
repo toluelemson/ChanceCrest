@@ -59,7 +59,9 @@
             if (messageOutput.body.winAmount > 0) {
                 p.appendChild(document.createTextNode(messageOutput.body.winAmount));
             } else {
-                p.appendChild(document.createTextNode("You lose"));
+                var textNode = document.createTextNode("You lose");
+                p.appendChild(textNode);
+                p.style.color = "red";
             }
 
             response.appendChild(p);
