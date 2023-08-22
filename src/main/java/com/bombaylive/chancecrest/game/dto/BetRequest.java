@@ -18,6 +18,11 @@ import javax.validation.constraints.Min;
 public class BetRequest {
 
     /**
+     * A server generated random number.
+     */
+    private int serverRandomNumber;
+
+    /**
      * The amount placed as bet.
      */
     @Min(value = 0, message = "Bet must be greater than 0.")
@@ -28,6 +33,31 @@ public class BetRequest {
      */
     @Min(value = 1, message = "Chosen number should be greater than 1")
     @Max(value = 100, message = "Chosen number should be between 1 and 100")
-    private int number;
+    private int playerNumber;
 
+    /**
+     * The total number of players participating.
+     */
+    private int playerCount;
+
+    /**
+     * The number of threads to be used.
+     */
+    private int numberOfThreads;
+
+    /**
+     * Total money involved.
+     */
+    private double totalMoney;
+
+    /**
+     * Total number of betting rounds.
+     */
+    private int numberOfRounds;
+
+    public BetRequest(double betAmount, int playerNumber) {
+
+        this.betAmount = betAmount;
+        this.playerNumber = playerNumber;
+    }
 }

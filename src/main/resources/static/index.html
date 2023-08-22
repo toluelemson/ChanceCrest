@@ -46,9 +46,9 @@
 
         function play() {
             var message = document.getElementById('betAmount').value;
-            var number = document.getElementById('number').value;
+            var playerNumber = document.getElementById('playerNumber').value;
             stompClient.send("/app/play", {},
-                JSON.stringify({'betAmount': message, 'number': number}))
+                JSON.stringify({'betAmount': message, 'playerNumber': playerNumber}))
         }
 
         function showWinOutput(messageOutput) {
@@ -56,10 +56,10 @@
             var p = document.createElement('p');
             p.style.wordWrap = 'break-word';
 
-            if (messageOutput.body.winAmount) {
+            if (messageOutput.body.winAmount > 0) {
                 p.appendChild(document.createTextNode(messageOutput.body.winAmount));
             } else {
-                p.appendChild(document.createTextNode(""));
+                p.appendChild(document.createTextNode("You lose"));
             }
 
             response.appendChild(p);
@@ -83,8 +83,8 @@
         <div id="conversationDiv">
             <label for="betAmount">Bet Amount:</label>
             <input type="text" id="betAmount" placeholder="Bet Amount." />
-            <label for="number">Number:</label>
-            <input type="text" id="number" placeholder="Number" />
+            <label for="playerNumber">Number:</label>
+            <input type="text" id="playerNumber" placeholder="Number" />
             <button id="Play" onclick="play();">Play</button>
             <p id="response"></p>
             <p id="errorResponse" style="color: red;"></p>
