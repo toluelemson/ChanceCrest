@@ -8,8 +8,6 @@ import com.bombaylive.chancecrest.util.ServerNumberGenerator;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,19 +22,12 @@ import java.util.stream.IntStream;
 @Service
 @Slf4j
 public class GameService {
-    private final SimpMessagingTemplate template;
-
-    @Autowired
-    public GameService(SimpMessagingTemplate template) {
-        this.template = template;
-    }
 
     public BetResponse play(BetRequest betRequest) {
         ensureValidServerNumber(betRequest);
         validateBetRequest(betRequest);
 
         double winAmount = calculateWin(betRequest);
-        template.convertAndSend("/topic/play", winAmount);
 
         return BetResponse.builder()
                 .winAmount(winAmount)

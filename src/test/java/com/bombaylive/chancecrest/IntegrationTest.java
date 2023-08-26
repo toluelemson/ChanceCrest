@@ -14,17 +14,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
-import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
+import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,39 +31,21 @@ public class IntegrationTest {
     @LocalServerPort
     private int port;
 
-    SockJsClient sockJsClient;
-
     private WebSocketStompClient stompClient;
 
     @Before
     public void setup() {
-        List<Transport> transports = new ArrayList<>();
-        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
-
-        this.sockJsClient = new SockJsClient(transports);
+        SockJsClient sockJsClient = new SockJsClient(Collections.singletonList(new WebSocketTransport(new StandardWebSocketClient())));
         this.stompClient = new WebSocketStompClient(sockJsClient);
         this.stompClient.setMessageConverter(new MappingJackson2MessageConverter());
     }
 
     @Test
     public void testMakeBet() throws Exception {
-        StompSessionHandler sessionHandler = new StompSessionHandlerAdapter() {
-            @Override
-            public void afterConnected(@NonNull StompSession session, @NonNull StompHeaders connectedHeaders) {
-                System.out.println("Connected!");
-            }
-        };
-
-        StompSession session = this.stompClient
-                .connect("ws://localhost:" + port + "/ws", sessionHandler)
-                .get(1, TimeUnit.SECONDS);
-
-        BetRequest request = new BetRequest(40.5, 50);
-        session.send("/app/play", request);
-
         AtomicReference<BetResponse> betResponseRef = new AtomicReference<>();
-        session.subscribe("/topic/play", new StompFrameHandler() {
+        CountDownLatch latch = new CountDownLatch(1);
 
+        StompSessionHandler sessionHandler = new StompSessionHandlerAdapter() {
             @Override
             @NonNull
             public Type getPayloadType(@NonNull StompHeaders headers) {
@@ -76,12 +56,20 @@ public class IntegrationTest {
             public void handleFrame(@NonNull StompHeaders headers, Object payload) {
                 assertNotNull(payload);
                 betResponseRef.set((BetResponse) payload);
+                latch.countDown();
             }
-        });
+        };
 
-        Thread.sleep(1000);
+        StompSession session = this.stompClient.connect("ws://localhost:" + port + "/ws", sessionHandler).get(1, TimeUnit.SECONDS);
+
+        BetRequest request = new BetRequest(40.5, 50);
+        session.send("/app/play", request);
+        session.subscribe("/topic/play", sessionHandler);
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS), "Response not received within timeout period");
 
         BetResponse response = betResponseRef.get();
         assertNotNull(response);
+        assertEquals(80.19, response.getWinAmount());
     }
 }
