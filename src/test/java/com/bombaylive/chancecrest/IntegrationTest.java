@@ -2,6 +2,7 @@ package com.bombaylive.chancecrest;
 
 import com.bombaylive.chancecrest.game.dto.BetRequest;
 import com.bombaylive.chancecrest.game.dto.BetResponse;
+import lombok.NonNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +33,7 @@ public class IntegrationTest {
     @LocalServerPort
     private int port;
 
-    private SockJsClient sockJsClient;
+    SockJsClient sockJsClient;
 
     private WebSocketStompClient stompClient;
 
@@ -50,7 +51,7 @@ public class IntegrationTest {
     public void testMakeBet() throws Exception {
         StompSessionHandler sessionHandler = new StompSessionHandlerAdapter() {
             @Override
-            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+            public void afterConnected(@NonNull StompSession session, @NonNull StompHeaders connectedHeaders) {
                 System.out.println("Connected!");
             }
         };
@@ -66,13 +67,13 @@ public class IntegrationTest {
         session.subscribe("/topic/play", new StompFrameHandler() {
 
             @Override
-            public Type getPayloadType(StompHeaders headers) {
+            @NonNull
+            public Type getPayloadType(@NonNull StompHeaders headers) {
                 return BetResponse.class;
             }
 
             @Override
-            public void handleFrame(StompHeaders headers, Object payload) {
-                System.out.println(payload + "payloaddd");
+            public void handleFrame(@NonNull StompHeaders headers, Object payload) {
                 assertNotNull(payload);
                 betResponseRef.set((BetResponse) payload);
             }
@@ -81,7 +82,6 @@ public class IntegrationTest {
         Thread.sleep(1000);
 
         BetResponse response = betResponseRef.get();
-        System.out.println(response);
         assertNotNull(response);
     }
 }
