@@ -8,6 +8,8 @@ import com.bombaylive.chancecrest.util.ServerNumberGenerator;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,12 +24,19 @@ import java.util.stream.IntStream;
 @Service
 @Slf4j
 public class GameService {
+    private final SimpMessagingTemplate template;
+
+    @Autowired
+    public GameService(SimpMessagingTemplate template) {
+        this.template = template;
+    }
 
     public BetResponse play(BetRequest betRequest) {
         ensureValidServerNumber(betRequest);
         validateBetRequest(betRequest);
 
         double winAmount = calculateWin(betRequest);
+        template.convertAndSend("/topic/play", winAmount);
 
         return BetResponse.builder()
                 .winAmount(winAmount)
@@ -42,8 +51,9 @@ public class GameService {
     }
 
     private void validateBetRequest(BetRequest betRequest) {
-        if (betRequest.getBetAmount() <= 0) {
-            throw new InvalidBetAmountException("Bet amount should be greater than zero.");
+        double betAmount = betRequest.getBetAmount();
+        if (betAmount < 1 || betAmount > 100) {
+            throw new InvalidBetAmountException("Bet amount should be between 1 and 100.");
         }
 
         int number = betRequest.getPlayerNumber();
@@ -51,7 +61,6 @@ public class GameService {
             throw new InvalidNumberChoiceException("Chosen number should be between 1 and 100");
         }
     }
-
     private double calculateWin(BetRequest betRequest) {
         if (betRequest.getServerRandomNumber() < betRequest.getPlayerNumber()) {
             double winMultiplier = 99.0 / (100 - betRequest.getPlayerNumber());
@@ -61,6 +70,8 @@ public class GameService {
     }
 
     public double calculateRTPWithStream(BetRequest betRequest) {
+        ensureValidServerNumber(betRequest);
+        validateBetRequest(betRequest);
         DoubleAdder totalSpent = new DoubleAdder();
         DoubleAdder totalWon = new DoubleAdder();
 
@@ -72,6 +83,8 @@ public class GameService {
     }
 
     public double calculateRTPWithThreads(BetRequest betRequest) {
+        ensureValidServerNumber(betRequest);
+        validateBetRequest(betRequest);
         DoubleAdder totalSpent = new DoubleAdder();
         DoubleAdder totalWon = new DoubleAdder();
 

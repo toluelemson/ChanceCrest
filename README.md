@@ -71,9 +71,78 @@ Dive into the world of number betting with ChanceCrest. Experience a seamless, t
    docker-compose down -v
    ```
 
+## Endpoints Overview
+
+### 1. Place a Bet
+
+#### REST Endpoint
+
+- **URL**: `/play`
+- **Method**: `POST`
+- **Request Body**:
+  ```json
+  {
+    "betAmount": 40.5,
+    "playerNumber": 50
+  }
+  ```
+
+#### WebSocket Endpoint
+
+- **Destination**: `/play`
+- **Broadcast Topic**: `/topic/play`
+
+### 2. Simulate RTP (Return To Player)
+
+This endpoint allows users to simulate the RTP using multiple threads.
+
+#### REST Endpoint
+
+- **URL**: `/multiPlay`
+- **Method**: `POST`
+- **Request Body**:
+  ```json
+  {
+    "betAmount": 40.5,
+    "playerNumber": 50,
+    "numberOfRounds": 1000000,
+    "numberOfThreads": 24
+  }
+  ```
+
+#### WebSocket Endpoint
+
+- **Destination**: `/multiPlay`
+- **Broadcast Topic**: `/topic/multiPlay`
+
 ## Usage
 
-Once the server is running, navigate to [http://localhost:8080/](http://localhost:8080/) to access the app's frontend. Here, you can start placing bets.
+#### Using REST API
+
+1. To **place a bet**:
+   - Send a POST request to `/play` with the appropriate `BetRequest` payload.
+   - The server will process the bet and respond with a `BetResponse`.
+
+2. To **simulate RTP**:
+   - Send a POST request to `/multiPlay` with the `BetRequest` payload.
+   - The server will process the simulation and respond with a `BetResponse`.
+
+
+#### Using WebSocket
+1. Using Browser client
+   - Once the server is running, navigate to [http://localhost:8080/](http://localhost:8080/) to access the app's frontend. Here, you can start placing bets.
+
+2. Using other web=socket client
+
+   - Connect to the WebSocket endpoint (e.g., `ws://localhost:8080/ws`).
+   - Subscribe to the topic `/topic/play` or `/topic/multiPlay`. 
+   - Whenever a bet is placed by any user (either through the REST API or WebSocket), all subscribed clients will receive the `BetResponse`.
+
+### Error Handling
+
+If there are any issues with the bet, such as an invalid bet amount or invalid number choice, an error message will be returned instead of the `BetResponse`.
+
+---
 
 ## Testing
 

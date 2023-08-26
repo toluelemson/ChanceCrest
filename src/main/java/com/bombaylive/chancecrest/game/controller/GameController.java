@@ -8,8 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -34,19 +35,25 @@ public class GameController {
      * @return The bet response.
      */
     @MessageMapping("/play")
-    @SendTo("/topic/play")
-    public ResponseEntity<BetResponse> makeBet(BetRequest betRequest) {
+    @PostMapping("/play")
+    public ResponseEntity<BetResponse> makeBet(@RequestBody BetRequest betRequest) {
         try {
-            return ResponseEntity.ok(gameService.play(betRequest));
+            BetResponse response = gameService.play(betRequest);
+            template.convertAndSend("/topic/play", response);
+            return ResponseEntity.ok(response);
+
         } catch (InvalidBetAmountException | InvalidNumberChoiceException ex) {
             return sendErrorMessage(ex.getMessage());
         }
     }
 
+
     @MessageMapping("/multiPlay")
-    @SendTo("/topic/multiPlay")
-    public ResponseEntity<BetResponse> simulateRTP(BetRequest betRequest) {
-        return ResponseEntity.ok(new BetResponse(gameService.calculateRTPWithStream(betRequest)));
+    @PostMapping("/multiPlay")
+    public ResponseEntity<BetResponse> simulateRTP(@RequestBody BetRequest betRequest) {
+        BetResponse response = new BetResponse(gameService.calculateRTPWithStream(betRequest));
+        template.convertAndSend("/topic/multiPlay", response);
+        return ResponseEntity.ok(response);
     }
 
     private ResponseEntity<BetResponse> sendErrorMessage(String message) {
