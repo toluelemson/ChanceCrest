@@ -44,6 +44,11 @@
             console.log("Disconnected");
         }
 
+        function initializeConnection() {
+            disconnect();
+        }
+
+
         function play() {
             var message = document.getElementById('betAmount').value;
             var playerNumber = document.getElementById('playerNumber').value;
@@ -52,18 +57,16 @@
         }
 
         function showWinOutput(messageOutput) {
-            var response = document.getElementById('response');
-            var p = document.createElement('p');
+            const response = document.getElementById('response');
+            const p = document.createElement('p');
             p.style.wordWrap = 'break-word';
 
-            if (messageOutput.body.winAmount > 0) {
-                p.appendChild(document.createTextNode(messageOutput.body.winAmount));
+            if (messageOutput.winAmount > 0) {
+                p.textContent = messageOutput.winAmount;
             } else {
-                var textNode = document.createTextNode("You lose");
-                p.appendChild(textNode);
+                p.textContent = "You lose";
                 p.style.color = "red";
             }
-
             response.appendChild(p);
         }
 
@@ -73,7 +76,7 @@
         }
     </script>
 </head>
-<body onload="disconnect()">
+<body onload="initializeConnection()">
 <div>ChanceCrest by YOLO </div>
     <div>
         <br />
