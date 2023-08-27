@@ -60,4 +60,12 @@ public class BetRequest {
         this.betAmount = betAmount;
         this.playerNumber = playerNumber;
     }
+
+    public BetRequest(double betAmount, int playerNumber, int numberOfRounds, int numberOfThreads) {
+
+        this.betAmount = betAmount;
+        this.playerNumber = playerNumber;
+        this.numberOfRounds = numberOfRounds;
+        this.numberOfThreads = numberOfThreads;
+    }
 }

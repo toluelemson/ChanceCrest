@@ -142,7 +142,6 @@ This endpoint allows users to simulate the RTP using multiple threads.
 
 If there are any issues with the bet, such as an invalid bet amount or invalid number choice, an error message will be returned instead of the `BetResponse`.
 
----
 
 ## Testing
 
@@ -154,7 +153,6 @@ If there are any issues with the bet, such as an invalid bet amount or invalid n
 
 Certainly! Here's the section to add to your README in Markdown format:
 
----
 
 ## Project Management and Tracking
 
