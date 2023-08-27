@@ -89,7 +89,7 @@ Dive into the world of number betting with ChanceCrest. Experience a seamless, t
 
 #### WebSocket Endpoint
 
-- **Destination**: `/play`
+- **Destination**: `/app/play`
 - **Broadcast Topic**: `/topic/play`
 
 ### 2. Simulate RTP (Return To Player)
@@ -112,7 +112,7 @@ This endpoint allows users to simulate the RTP using multiple threads.
 
 #### WebSocket Endpoint
 
-- **Destination**: `/multiPlay`
+- **Destination**: `/app/multiPlay`
 - **Broadcast Topic**: `/topic/multiPlay`
 
 ## Usage
