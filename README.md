@@ -1,6 +1,4 @@
-Here's a cleaner and corrected version of the provided content:
 
----
 
 # ChanceCrest: by YOLO 🌊🎲
 
@@ -13,6 +11,7 @@ Dive into the world of number betting with ChanceCrest. Experience a seamless, t
 - [Features](#features)
 - [Installation without Docker](#installation-without-docker)
 - [Building and Running with Docker](#building-and-running-with-docker)
+- [Endpoints Overview](#Endpoints Overview)
 - [Usage](#usage)
 - [Testing](#testing)
 - [Project Management and Tracking](#project-management-and-tracking)
